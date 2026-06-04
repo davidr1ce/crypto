@@ -425,10 +425,25 @@ let toastTimer;
 
 function copyAddr(addr, e) {
   if (e) e.stopPropagation();
-  navigator.clipboard.writeText(addr).catch(() => {});
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(addr).catch(() => fallbackCopy(addr));
+  } else {
+    fallbackCopy(addr);
+  }
   clearTimeout(toastTimer);
   toast.classList.add('show');
   toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+}
+
+function fallbackCopy(addr) {
+  const el = document.createElement('textarea');
+  el.value = addr;
+  el.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+  document.body.appendChild(el);
+  el.focus();
+  el.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(el);
 }
 </script>
 </body>
