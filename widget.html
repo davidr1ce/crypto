@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>DR Widget</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #08090c;
+    font-family: 'Space Mono', monospace;
+    color: #e8eaf0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+  }
+
+  .widget {
+    background: linear-gradient(145deg, #0f1218, #13161f);
+    border: 1px solid rgba(240,180,41,0.2);
+    border-radius: 20px;
+    padding: 14px 16px;
+    width: 100%;
+    max-width: 320px;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .brand {
+    font-size: .6rem;
+    color: rgba(240,180,41,0.7);
+    letter-spacing: .15em;
+    text-transform: uppercase;
+  }
+
+  .updated {
+    font-size: .55rem;
+    color: #4b5563;
+  }
+
+  /* Total */
+  .total-row {
+    text-align: center;
+    padding: 10px 0 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 10px;
+  }
+
+  .total-label {
+    font-size: .55rem;
+    color: #6b7280;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .total-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #f0b429;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  /* Coin rows */
+  .coin-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .coin-row:last-child { border-bottom: none; }
+
+  .coin-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .coin-name {
+    font-size: .65rem;
+    color: #9ca3af;
+    flex: 1;
+    letter-spacing: .05em;
+  }
+
+  .coin-crypto {
+    font-size: .6rem;
+    color: #6b7280;
+    text-align: right;
+    margin-right: 8px;
+  }
+
+  .coin-usd {
+    font-size: .72rem;
+    font-weight: 700;
+    color: #e8eaf0;
+    text-align: right;
+    min-width: 60px;
+  }
+
+  /* Skeleton */
+  .skel {
+    display: inline-block;
+    border-radius: 4px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+  }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+
+  /* Refresh tap area */
+  .widget { cursor: pointer; user-select: none; }
+  .widget:active { opacity: .85; }
+
+  /* Error */
+  .err { font-size: .6rem; color: #ef4444; text-align: center; padding: 8px 0; }
+</style>
+</head>
+<body>
+
+<div class="widget" onclick="fetchAll(true)" title="Tap to refresh">
+
+  <div class="header">
+    <span class="brand">DavidRice</span>
+    <span class="updated" id="upd">—</span>
+  </div>
+
+  <div class="total-row">
+    <div class="total-label">Portfolio</div>
+    <div class="total-value" id="total"><span class="skel" style="width:90px;height:22px"></span></div>
+  </div>
+
+  <div id="rows">
+    <!-- filled by JS -->
+  </div>
+
+</div>
+
+<script>
+const COINS = [
+  { id:'sol', name:'SOL', color:'#9945FF', addr:'FepAWFY3L62wHL7ZFZXpeXLWGpbyZRU1z9Ff2kmsUzv2' },
+  { id:'ltc', name:'LTC', color:'#BFBBBB', addr:'LWJft5Arz3Wee6ifLiXopwQoSsGFxQgUdP' },
+  { id:'eth', name:'ETH', color:'#627EEA', addr:'0xb31e2d4b8dE9956192afAe31D67FCe5ADe8C1dbc' },
+  { id:'trx', name:'TRX', color:'#EF0027', addr:'TKBhpdGCSeq1MgNhYsL9QRLKX7xgeybKx4' }
+];
+
+// Render skeleton rows
+const rowsEl = document.getElementById('rows');
+COINS.forEach(c => {
+  rowsEl.innerHTML += `
+    <div class="coin-row">
+      <div class="coin-dot" style="background:${c.color}"></div>
+      <span class="coin-name">${c.name}</span>
+      <span class="coin-crypto" id="w-crypto-${c.id}"><span class="skel" style="width:50px;height:9px"></span></span>
+      <span class="coin-usd" id="w-usd-${c.id}"><span class="skel" style="width:40px;height:11px"></span></span>
+    </div>`;
+});
+
+let prices = {};
+let balances = {};
+
+async function fetchPrices() {
+  const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana,litecoin,ethereum,tron&vs_currencies=usd');
+  const d = await r.json();
+  prices = { sol: d.solana?.usd||0, ltc: d.litecoin?.usd||0, eth: d.ethereum?.usd||0, trx: d.tron?.usd||0 };
+}
+
+async function fetchSOL(addr) {
+  const r = await fetch('https://api.mainnet-beta.solana.com', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({jsonrpc:'2.0',id:1,method:'getBalance',params:[addr]})
+  });
+  const d = await r.json();
+  return (d.result?.value||0)/1e9;
+}
+
+async function fetchETH(addr) {
+  const r = await fetch(`https://api.blockchair.com/ethereum/dashboards/address/${addr}`);
+  const d = await r.json();
+  return (d.data?.[addr.toLowerCase()]?.address?.balance||0)/1e18;
+}
+
+async function fetchLTC(addr) {
+  const r = await fetch(`https://api.blockcypher.com/v1/ltc/main/addrs/${addr}/balance`);
+  const d = await r.json();
+  return (d.balance||0)/1e8;
+}
+
+async function fetchTRX(addr) {
+  const r = await fetch(`https://api.trongrid.io/v1/accounts/${addr}`);
+  const d = await r.json();
+  return (d.data?.[0]?.balance||0)/1e6;
+}
+
+function fmt(n) {
+  return '$' + n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function updateRow(id, amount) {
+  const price = prices[id]||0;
+  const usd = amount * price;
+  const coin = COINS.find(c=>c.id===id);
+  document.getElementById(`w-usd-${id}`).textContent = fmt(usd);
+  document.getElementById(`w-crypto-${id}`).textContent = amount.toFixed(4)+' '+coin.name;
+  balances[id] = usd;
+  const total = Object.values(balances).reduce((a,b)=>a+b,0);
+  document.getElementById('total').textContent = fmt(total);
+}
+
+async function fetchAll(manual=false) {
+  try {
+    await fetchPrices();
+    const [sol,eth,ltc,trx] = await Promise.allSettled([
+      fetchSOL(COINS[0].addr),
+      fetchETH(COINS[2].addr),
+      fetchLTC(COINS[1].addr),
+      fetchTRX(COINS[3].addr)
+    ]);
+    if(sol.status==='fulfilled') updateRow('sol',sol.value);
+    if(eth.status==='fulfilled') updateRow('eth',eth.value);
+    if(ltc.status==='fulfilled') updateRow('ltc',ltc.value);
+    if(trx.status==='fulfilled') updateRow('trx',trx.value);
+    const now = new Date();
+    document.getElementById('upd').textContent =
+      now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  } catch(e) { console.error(e); }
+}
+
+fetchAll();
+setInterval(fetchAll, 2*60*1000);
+</script>
+</body>
+</html>
