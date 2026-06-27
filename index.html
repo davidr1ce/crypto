@@ -845,10 +845,10 @@ function fallbackCopy(addr) {
 <div class="drawer" id="drawer">
   <div class="drawer-title">Navigation</div>
   <a class="drawer-item" href="/index.html">
-    <span class="di-icon">💼</span> Main Wallet
+    <span class="di-icon">👛</span> Main Wallet
   </a>
   <button class="drawer-item" onclick="askPassword()">
-    <span class="di-icon">🎯</span> Target 00
+    <span class="di-icon">🎯</span> Target 700$
   </button>
   <span class="drawer-close" onclick="closeDrawer()">✕ Close</span>
 </div>
@@ -885,7 +885,7 @@ function closeDrawer() {
 // 
 // Current password hash below — change it to set your own password.
 // DEFAULT: 'david700' — CHANGE THIS!
-const PASS_HASH = 'a8ca1349967f84ac4e21ab838e84c97bdc336165f20b1ad810b73e9f4e5f68d3';
+const PASS_HASH = 'a95e3a951b56e5cc1ba6574a4552a1a97a4f29c7d8dae6f1e30b54b77e07e4bd';
 
 async function hashPassword(pw) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
