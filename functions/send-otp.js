@@ -31,7 +31,7 @@ exports.handler = async (event) => {
     try {
       const client = twilio(ACCOUNT_SID, AUTH_TOKEN);
       await client.messages.create({
-        body: `Target $700 - Doğrulama kodun: ${otp} (5 dakika geçerli)`,
+        body: `Target $700 : ${otp} (5mins)`,
         from: FROM_NUMBER,
         to: TO_NUMBER
       });
