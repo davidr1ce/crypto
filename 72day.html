@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#08090c">
+<title>DavidRice · 72-Day Earnings & Withdrawal Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #08090c;
+    --surface: #10131a;
+    --surface-hover: #161a24;
+    --border: rgba(255,255,255,0.07);
+    --border-accent: rgba(240,180,41,0.28);
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --accent: #f0b429;
+    --indigo: #6366f1;
+    --green: #4ade9c;
+    --red: #f2637e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Syne', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid & Ambient Orbs */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(240,180,41,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(240,180,41,0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(110px);
+    opacity: .18;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .orb-1 { width: 520px; height: 520px; background: #f0b429; top: -160px; right: -160px; }
+  .orb-2 { width: 400px; height: 400px; background: #6366f1; bottom: -120px; left: -120px; }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 56px 20px 80px;
+  }
+
+  /* ── Header ── */
+  header { text-align: center; margin-bottom: 34px; animation: fadeUp .5s ease .05s both; }
+
+  .avatar-ring {
+    width: 72px; height: 72px;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--indigo));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    font-weight: 800;
+    color: #08090c;
+    letter-spacing: -1px;
+    box-shadow: 0 0 32px rgba(240,180,41,0.25);
+  }
+
+  h1 {
+    font-size: clamp(1.85rem, 5.5vw, 2.65rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    background: linear-gradient(90deg, #fff 30%, var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+  }
+
+  .tagline {
+    font-family: 'Space Mono', monospace;
+    font-size: .74rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* ── Hero Balance & Progress Banner ── */
+  .hero-banner {
+    background: linear-gradient(135deg, rgba(240,180,41,0.12), rgba(99,102,241,0.08));
+    border: 1px solid rgba(240,180,41,0.22);
+    border-radius: 20px;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    animation: fadeUp .5s ease .1s both;
+  }
+
+  .hero-top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .hero-label {
+    font-family: 'Space Mono', monospace;
+    font-size: .68rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    margin-bottom: 6px;
+  }
+
+  .hero-value {
+    font-size: 2.3rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .hero-sub-val {
+    font-family: 'Space Mono', monospace;
+    font-size: .75rem;
+    color: var(--text);
+    margin-top: 6px;
+    opacity: 0.85;
+  }
+
+  .progress-wrap {
+    margin-top: 4px;
+  }
+
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Space Mono', monospace;
+    font-size: .68rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .progress-meta span:last-child {
+    color: var(--green);
+    font-weight: 700;
+  }
+
+  .progress-track {
+    background: rgba(255,255,255,0.06);
+    border-radius: 99px;
+    height: 7px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--accent), var(--green));
+    width: 0%;
+    transition: width .45s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ── Summary Grid ── */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+    animation: fadeUp .5s ease .15s both;
+  }
+
+  @media (min-width: 560px) {
+    .summary-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  .stat-tile {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 15px 16px;
+    transition: border-color .2s;
+  }
+  .stat-tile:hover {
+    border-color: rgba(255,255,255,0.14);
+  }
+
+  .stat-label {
+    font-family: 'Space Mono', monospace;
+    font-size: .64rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .stat-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text);
+    display: block;
+  }
+  .stat-val.green { color: var(--green); }
+  .stat-val.accent { color: var(--accent); }
+
+  /* ── Note Box ── */
+  .note-box {
+    background: rgba(99,102,241,0.08);
+    border: 1px solid rgba(99,102,241,0.22);
+    border-radius: 16px;
+    padding: 14px 18px;
+    font-size: .82rem;
+    line-height: 1.55;
+    color: #c7d2fe;
+    margin-bottom: 16px;
+    animation: fadeUp .5s ease .2s both;
+  }
+
+  /* ── Action Bar & Filter ── */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+    animation: fadeUp .5s ease .25s both;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    border: none;
+    border-radius: 11px;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: .8rem;
+    padding: 10px 15px;
+    transition: opacity .2s, transform .15s, border-color .2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:hover { opacity: .88; transform: translateY(-1px); }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #08090c;
+  }
+
+  .btn-secondary {
+    background: rgba(255,255,255,0.05);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover {
+    border-color: rgba(255,255,255,0.2);
+  }
+
+  .btn-danger {
+    background: rgba(242,99,126,0.1);
+    color: var(--red);
+    border: 1px solid rgba(242,99,126,0.25);
+  }
+
+  .filter-pills {
+    display: flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    padding: 3px;
+    gap: 3px;
+  }
+
+  .pill {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: .68rem;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .pill.active {
+    background: rgba(240,180,41,0.16);
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* ── Day Cards ── */
+  .days-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .day-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 16px 18px;
+    transition: border-color .25s, transform .2s, background .25s;
+  }
+  .day-card:hover {
+    border-color: rgba(255,255,255,0.14);
+  }
+  .day-card.has-income {
+    border-color: rgba(74,222,156,0.22);
+  }
+  .day-card.has-withdraw {
+    border-color: rgba(240,180,41,0.3);
+    background: linear-gradient(135deg, var(--surface), rgba(240,180,41,0.03));
+  }
+
+  .day-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .day-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 800;
+    font-size: 1rem;
+    letter-spacing: -0.01em;
+  }
+
+  .day-num-pill {
+    font-family: 'Space Mono', monospace;
+    font-size: .72rem;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    padding: 3px 9px;
+    border-radius: 8px;
+    color: var(--accent);
+  }
+
+  .day-bal {
+    font-family: 'Space Mono', monospace;
+    font-size: .75rem;
+    color: var(--muted);
+  }
+  .day-bal b {
+    color: var(--text);
+    font-size: .85rem;
+  }
+
+  .checks-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+  @media (min-width: 480px) {
+    .checks-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .check-box {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 11px 13px;
+    cursor: pointer;
+    user-select: none;
+    transition: all .2s;
+    font-size: .84rem;
+    font-weight: 700;
+  }
+  .check-box:hover {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.16);
+  }
+  .check-box.checked-income {
+    background: rgba(74,222,156,0.08);
+    border-color: rgba(74,222,156,0.35);
+    color: var(--green);
+  }
+  .check-box.checked-withdraw {
+    background: rgba(240,180,41,0.09);
+    border-color: rgba(240,180,41,0.38);
+    color: var(--accent);
+  }
+
+  .check-box input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 21px;
+    height: 21px;
+    border-radius: 6px;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    background: rgba(0,0,0,0.3);
+    display: grid;
+    place-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .check-box input[type="checkbox"]::before {
+    content: "✓";
+    font-size: 13px;
+    font-weight: 900;
+    color: #08090c;
+    transform: scale(0);
+    transition: transform .15s ease;
+  }
+  .check-box input[data-kind="income"]:checked {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .check-box input[data-kind="withdraw"]:checked {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .check-box input[type="checkbox"]:checked::before {
+    transform: scale(1);
+  }
+
+  .day-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 11px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    font-family: 'Space Mono', monospace;
+    font-size: .7rem;
+    color: var(--muted);
+  }
+  .day-footer b {
+    color: var(--text);
+  }
+  .day-footer .sug-highlight {
+    color: var(--accent);
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #fff;
+    color: #08090c;
+    font-weight: 700;
+    font-size: .82rem;
+    padding: 11px 22px;
+    border-radius: 40px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s, transform .25s;
+    z-index: 600;
+    white-space: nowrap;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  footer {
+    text-align: center;
+    margin-top: 52px;
+    font-family: 'Space Mono', monospace;
+    font-size: .65rem;
+    color: var(--muted);
+    letter-spacing: .06em;
+    line-height: 1.7;
+  }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform: translateY(20px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+
+  /* ── Menu button & Drawer ── */
+  .menu-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 200;
+    background: rgba(16,19,26,0.9);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transition: border-color .2s;
+  }
+  .menu-btn:hover { border-color: rgba(240,180,41,0.4); }
+  .menu-btn span {
+    display: block;
+    width: 18px; height: 2px;
+    background: var(--text);
+    border-radius: 2px;
+    transition: background .2s;
+  }
+  .menu-btn span+span { margin-top: 4px; }
+
+  .drawer-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    z-index: 300;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s;
+  }
+  .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+
+  .drawer {
+    position: fixed;
+    top: 0; right: 0;
+    width: 260px; height: 100%;
+    background: #0d1018;
+    border-left: 1px solid rgba(255,255,255,0.08);
+    z-index: 400;
+    transform: translateX(100%);
+    transition: transform .3s cubic-bezier(.4,0,.2,1);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .drawer.open { transform: translateX(0); }
+
+  .drawer-title {
+    font-family: 'Space Mono', monospace;
+    font-size: .65rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .drawer-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 700;
+    font-size: .9rem;
+    transition: background .2s;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+  }
+  .drawer-item:hover { background: rgba(255,255,255,0.06); }
+  .drawer-item.active-nav {
+    background: rgba(240,180,41,0.1);
+    border: 1px solid rgba(240,180,41,0.22);
+    color: var(--accent);
+  }
+  .drawer-item .di-icon { font-size: 1.2rem; }
+
+  .drawer-close {
+    margin-top: auto;
+    font-family: 'Space Mono', monospace;
+    font-size: .65rem;
+    color: var(--muted);
+    text-align: center;
+    cursor: pointer;
+    padding: 10px;
+  }
+
+  /* ── Password modal ── */
+  .pw-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(6px);
+    z-index: 500;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity .2s;
+  }
+  .pw-overlay.open { opacity: 1; pointer-events: auto; }
+
+  .pw-card {
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 36px;
+    width: 300px;
+    text-align: center;
+    transform: scale(0.9);
+    transition: transform .25s cubic-bezier(.34,1.56,.64,1);
+  }
+  .pw-overlay.open .pw-card { transform: scale(1); }
+
+  .pw-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; }
+  .pw-sub { font-family: 'Space Mono', monospace; font-size: .65rem; color: var(--muted); margin-bottom: 20px; }
+
+  .pw-input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: .85rem;
+    letter-spacing: .2em;
+    text-align: center;
+    outline: none;
+    margin-bottom: 12px;
+    transition: border-color .2s;
+  }
+  .pw-input:focus { border-color: var(--accent); }
+
+  .pw-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #08090c;
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: .9rem;
+    cursor: pointer;
+    transition: opacity .2s;
+  }
+  .pw-btn:hover { opacity: .85; }
+
+  .pw-error {
+    font-family: 'Space Mono', monospace;
+    font-size: .65rem;
+    color: #ef4444;
+    margin-top: 8px;
+    min-height: 16px;
+  }
+
+  .pw-cancel {
+    font-family: 'Space Mono', monospace;
+    font-size: .65rem;
+    color: var(--muted);
+    margin-top: 12px;
+    cursor: pointer;
+    display: block;
+  }
+  .pw-cancel:hover { color: var(--text); }
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<div class="wrapper">
+
+  <header>
+    <div class="avatar-ring">72</div>
+    <h1>72-Day Tracker</h1>
+    <p class="tagline">Daily Goal $34 · Withdrawals in Multiples of $20 · Starting Balance $0</p>
+  </header>
+
+  <!-- Hero Banner -->
+  <div class="hero-banner">
+    <div class="hero-top">
+      <div>
+        <div class="hero-label">Current Balance</div>
+        <div class="hero-value" id="balance">$0</div>
+        <div class="hero-sub-val" id="nextWithdrawNote">Available to withdraw: $0</div>
+      </div>
+      <div style="text-align:right">
+        <div class="hero-label">72-Day Target</div>
+        <div style="font-family:'Space Mono',monospace;font-size:1.15rem;font-weight:700;color:var(--text)">$2,448</div>
+      </div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span>OVERALL PROGRESS</span>
+        <span id="progressText">0.0% (0 / 72 Days)</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Stats -->
+  <div class="summary-grid">
+    <div class="stat-tile">
+      <span class="stat-label">Income Days</span>
+      <strong class="stat-val" id="incomeDays">0 / 72</strong>
+    </div>
+    <div class="stat-tile">
+      <span class="stat-label">Withdrawal Days</span>
+      <strong class="stat-val" id="withdrawDays">0 / 72</strong>
+    </div>
+    <div class="stat-tile">
+      <span class="stat-label">Confirmed Income</span>
+      <strong class="stat-val green" id="incomeTotal">$0</strong>
+    </div>
+    <div class="stat-tile">
+      <span class="stat-label">Withdrawn Cash</span>
+      <strong class="stat-val accent" id="withdrawTotal">$0</strong>
+    </div>
+  </div>
+
+  <!-- Info Note -->
+  <div class="note-box">
+    Each day has separate checkboxes for income and cash withdrawal. First check <b>$34 income received</b>, and once you actually cash out, check <b>Cash withdrawn</b>. The suggested withdrawal is automatically calculated based on confirmed income and previous withdrawals up to that day.
+  </div>
+
+  <!-- Action Toolbar -->
+  <div class="toolbar">
+    <div class="btn-group">
+      <button class="btn btn-primary" id="export">↓ Export Backup</button>
+      <label class="btn btn-secondary" style="cursor:pointer">
+        ↑ Import Backup
+        <input type="file" id="importFile" accept=".json" style="display:none">
+      </label>
+      <button class="btn btn-danger" id="reset">Reset</button>
+    </div>
+
+    <div class="filter-pills">
+      <button class="pill active" data-filter="all" onclick="setFilter('all', this)">All</button>
+      <button class="pill" data-filter="pending" onclick="setFilter('pending', this)">Pending</button>
+      <button class="pill" data-filter="done" onclick="setFilter('done', this)">Completed</button>
+    </div>
+  </div>
+
+  <!-- Days Container -->
+  <div class="days-list" id="days"></div>
+
+  <footer>
+    <p>Checkmarks are saved automatically in this browser (localStorage) &nbsp;·&nbsp; Export regular backups to keep your progress safe</p>
+  </footer>
+
+</div>
+
+<div class="toast" id="toast">✓ Saved</div>
+
+<!-- Menu button -->
+<button class="menu-btn" onclick="openDrawer()" aria-label="Menu">
+  <span></span><span></span><span></span>
+</button>
+
+<!-- Drawer overlay -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+
+<!-- Drawer -->
+<div class="drawer" id="drawer">
+  <div class="drawer-title">Navigation</div>
+  <a class="drawer-item" href="/index.html">
+    <span class="di-icon">🏦</span> Main Wallet
+  </a>
+  <a class="drawer-item" href="/pulse.html">
+    <span class="di-icon">📈</span> Crypto Pulse
+  </a>
+  <a class="drawer-item active-nav" href="/72gun.html">
+    <span class="di-icon">📅</span> 72-Day Tracker
+  </a>
+  <button class="drawer-item" onclick="askPassword()">
+    <span class="di-icon">🎯</span>
+    <span style="flex:1">Target $700
+      <div style="margin-top:5px;background:rgba(255,255,255,0.06);bo
